@@ -24,6 +24,8 @@ public class EnemyAI : MonoBehaviour
     public float sightRange;
     public bool playerInSightRange;
     public float sphereRad;
+    private Vector3 originalPos;
+    private float stuckTimer=0f;
     [SerializeField]private LayerMask wallLayer;
 
     private void Awake()
@@ -34,20 +36,29 @@ public class EnemyAI : MonoBehaviour
         //lineRenderer=GetComponent<LineRenderer>();
     // 
     }
+    void Start()
+    {
+        originalPos=this.transform.position;
+    }
 
     private void Update()
     {
         //Check for sight and attack range
-        
+       
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
         
-        
-
+       
+    
         if (!playerInSightRange) Patroling();
         else ChasePlayer();
         
     }
-
+    void ResetPosition()
+    {
+        this.transform.position=originalPos;
+        SearchWalkPoint();
+    }
+    
     private void Patroling()
     {
         if (!walkPointSet) SearchWalkPoint();
@@ -84,8 +95,7 @@ public class EnemyAI : MonoBehaviour
         if(other.gameObject.CompareTag("Player"))
         SceneManager.LoadScene(2);
         if(other.gameObject.CompareTag("Wall")){
-        walkPointSet=false;
-        Debug.Log("W");
+        ResetPosition();
         }
     }
 

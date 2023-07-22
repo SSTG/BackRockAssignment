@@ -49,9 +49,10 @@ public class ObjectPooling : MonoBehaviour
             pelletPrefabs[i].SetActive(true);
             
             pelletPrefabs[i].transform.position=pelletSpawns[Random.Range(0,pelletSpawns.Length)].position+currentDir*Random.Range(5f,-5f);
+            //randomising pellet's positions(Not the most effective way)
             
              
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(2f);//time before next pellet spawn
             
         }
     }}
