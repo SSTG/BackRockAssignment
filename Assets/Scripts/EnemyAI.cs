@@ -1,10 +1,10 @@
 
 using UnityEngine;
-using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
-public class MinotaurAI : MonoBehaviour
+public class EnemyAI : MonoBehaviour
 {
-    public NavMeshAgent agent;
+
 
     private Transform player;
 
@@ -16,16 +16,19 @@ public class MinotaurAI : MonoBehaviour
     
     bool walkPointSet;
     public float walkPointRange;
+    public bool xWalker=true;
+    private Vector3 prevWalkPoint;
 
-
+    [SerializeField]private float moveSpeed=10f;
     //States
     public float sightRange;
     public bool playerInSightRange;
+    public float sphereRad;
+    [SerializeField]private LayerMask wallLayer;
 
     private void Awake()
     {
         //player = GameObject.Find("PlayerObj").transform;
-        agent = GetComponent<NavMeshAgent>();
         player=GameObject.FindWithTag("Player").transform;
         
         //lineRenderer=GetComponent<LineRenderer>();
@@ -35,13 +38,14 @@ public class MinotaurAI : MonoBehaviour
     private void Update()
     {
         //Check for sight and attack range
+        
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
         
         
 
         if (!playerInSightRange) Patroling();
         else ChasePlayer();
-
+        
     }
 
     private void Patroling()
@@ -49,7 +53,7 @@ public class MinotaurAI : MonoBehaviour
         if (!walkPointSet) SearchWalkPoint();
 
         if (walkPointSet)
-            agent.SetDestination(walkPoint);
+            this.transform.position=Vector3.MoveTowards(this.transform.position,walkPoint,moveSpeed*Time.deltaTime);
         
         
         Vector3 distanceToWalkPoint = transform.position - walkPoint;
@@ -62,8 +66,10 @@ public class MinotaurAI : MonoBehaviour
         //Calculate random point in range
         float randomZ = Random.Range(-walkPointRange, walkPointRange);
         float randomX = Random.Range(-walkPointRange, walkPointRange);
-
-        walkPoint = new Vector3(transform.position.x+randomX, transform.position.y, transform.position.z + randomZ);
+        if(xWalker)
+        walkPoint = new Vector3(transform.position.x+randomX, transform.position.y, transform.position.z);
+        else
+        walkPoint = new Vector3(transform.position.x, transform.position.y, transform.position.z+randomZ);
 
         if (Physics.Raycast(walkPoint, -transform.up, 2f, whatIsGround))
             walkPointSet = true;
@@ -71,9 +77,17 @@ public class MinotaurAI : MonoBehaviour
 
     private void ChasePlayer()
     {
-        agent.SetDestination(player.position);
+        this.transform.position=Vector3.MoveTowards(this.transform.position,player.position,moveSpeed*Time.deltaTime);
     }
-
+    void OnCollisionEnter(Collision other)
+    {
+        if(other.gameObject.CompareTag("Player"))
+        SceneManager.LoadScene(2);
+        if(other.gameObject.CompareTag("Wall")){
+        walkPointSet=false;
+        Debug.Log("W");
+        }
+    }
 
 
     private void OnDrawGizmosSelected()
@@ -81,6 +95,8 @@ public class MinotaurAI : MonoBehaviour
         
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, sightRange);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, sphereRad);
 
     }
 }

@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
     private Rigidbody rb;
     [SerializeField]LayerMask wallLayer;
     [SerializeField]float speed=10f;
+    public Vector3 direction=Vector3.forward;
+    
     void Start()
     {
         rb=GetComponent<Rigidbody>();
@@ -16,22 +18,34 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        rb.velocity=transform.forward*speed;
-        if(Input.GetKeyDown(KeyCode.A))
+        rb.velocity=speed*direction;
+        if(Input.GetKey(KeyCode.A))
         {
-            if(Physics.RayCast(transform.position,-transform.right,wallLayer))
-            //Turn Left
+            if(!Physics.Raycast(this.transform.position,-Vector3.right,3f,wallLayer))
+           direction=-Vector3.right;
         }
-        if(Input.GetKeyDown(KeyCode.D))
+        if(Input.GetKey(KeyCode.D))
         {
-            if(Physics.RayCast(transform.position,transform.right,wallLayer))
-            //Turn Right
+            if(!Physics.Raycast(this.transform.position,Vector3.right,3f,wallLayer))
+            direction=Vector3.right;
         }
-    }
-    void OnCollisionEnter(Collision other)
-    {
+        if(Input.GetKey(KeyCode.W))
+        {
+            if(!Physics.Raycast(this.transform.position,Vector3.forward,3f,wallLayer))
+            direction=Vector3.forward;
+        }
+        if(Input.GetKey(KeyCode.S))
+        {
+            if(!Physics.Raycast(this.transform.position,-Vector3.forward,3f,wallLayer))
+            direction=-Vector3.forward;
+        }
+    }private void OnTriggerEnter(Collider other) {
+        
+
         if(other.gameObject.CompareTag("Pellet")){
         ScoreManager.Instance.score+=1;
         other.gameObject.SetActive(false);
+        IEnumerator coroutine=ObjectPooling.Instance.ScatterPellets();
+        StartCoroutine(coroutine);
     }
 }}
