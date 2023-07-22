@@ -1,13 +1,13 @@
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
 
 
     private Transform player;
-
     public LayerMask whatIsGround, whatIsPlayer;
 
 
@@ -23,22 +23,28 @@ public class EnemyAI : MonoBehaviour
     //States
     public float sightRange;
     public bool playerInSightRange;
+    private NavMeshAgent agent;
+    public Collider ground;
     public float sphereRad;
     private Vector3 originalPos;
+    public Vector3[] bounds;
     private float stuckTimer=0f;
+    public LayerMask whatIsObstacle;
+    Rigidbody rb;
     [SerializeField]private LayerMask wallLayer;
 
     private void Awake()
     {
         //player = GameObject.Find("PlayerObj").transform;
         player=GameObject.FindWithTag("Player").transform;
-        
+        agent=GetComponent<NavMeshAgent>();
         //lineRenderer=GetComponent<LineRenderer>();
     // 
     }
     void Start()
     {
         originalPos=this.transform.position;
+        rb=GetComponent<Rigidbody>();
     }
 
     private void Update()
@@ -48,7 +54,6 @@ public class EnemyAI : MonoBehaviour
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
         
        
-    
         if (!playerInSightRange) Patroling();
         else ChasePlayer();
         
@@ -64,8 +69,7 @@ public class EnemyAI : MonoBehaviour
         if (!walkPointSet) SearchWalkPoint();
 
         if (walkPointSet)
-            this.transform.position=Vector3.MoveTowards(this.transform.position,walkPoint,moveSpeed*Time.deltaTime);
-        
+        agent.SetDestination(walkPoint);
         
         Vector3 distanceToWalkPoint = transform.position - walkPoint;
         //Walkpoint reached
@@ -77,26 +81,23 @@ public class EnemyAI : MonoBehaviour
         //Calculate random point in range
         float randomZ = Random.Range(-walkPointRange, walkPointRange);
         float randomX = Random.Range(-walkPointRange, walkPointRange);
-        if(xWalker)
-        walkPoint = new Vector3(transform.position.x+randomX, transform.position.y, transform.position.z);
-        else
-        walkPoint = new Vector3(transform.position.x, transform.position.y, transform.position.z+randomZ);
-
-        if (Physics.Raycast(walkPoint, -transform.up, 2f, whatIsGround))
+        walkPoint = new Vector3(transform.position.x+randomX, transform.position.y, transform.position.z + randomZ);
+        if (Physics.Raycast(walkPoint, -Vector3.up, 2f, whatIsGround) && !Physics.CheckSphere(walkPoint,0.2f, whatIsObstacle))
             walkPointSet = true;
     }
 
     private void ChasePlayer()
     {
-        this.transform.position=Vector3.MoveTowards(this.transform.position,player.position,moveSpeed*Time.deltaTime);
+        agent.SetDestination(player.transform.position);
     }
     void OnCollisionEnter(Collision other)
     {
         if(other.gameObject.CompareTag("Player"))
         SceneManager.LoadScene(2);
-        if(other.gameObject.CompareTag("Wall")){
+        if(other.gameObject.CompareTag("Wall")|| other.gameObject.CompareTag("Enemy"))
         ResetPosition();
-        }
+        
+        
     }
 
 

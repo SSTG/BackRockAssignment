@@ -5,6 +5,7 @@ using UnityEngine;
 public class ObjectPooling : MonoBehaviour
 {
     private List<GameObject> pelletPrefabs=new List<GameObject>();
+    public LayerMask whatIsGround;
     private int pelletCount=25;
     public int pelletThreshold=2;
     private Transform player;
@@ -47,15 +48,22 @@ public class ObjectPooling : MonoBehaviour
             
             if(!pelletPrefabs[i].activeInHierarchy){
             pelletPrefabs[i].SetActive(true);
-            
-            pelletPrefabs[i].transform.position=pelletSpawns[Random.Range(0,pelletSpawns.Length)].position+currentDir*Random.Range(5f,-5f);
-            //randomising pellet's positions(Not the most effective way)
+            pelletPrefabs[i].transform.position=RandomPos();
+
             
              
             yield return new WaitForSeconds(2f);//time before next pellet spawn
             
         }
     }}
+    public Vector3 RandomPos()
+    {
+        Vector3 randomPos=pelletSpawns[Random.Range(0,pelletSpawns.Length)].position+currentDir*Random.Range(5f,-5f);
+        if(Physics.Raycast(randomPos,-Vector3.up,whatIsGround))
+        return randomPos;
+        else
+        return RandomPos();
+    }
   
 
 }
